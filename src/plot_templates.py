@@ -8,6 +8,96 @@ from publication_style import CONTEXT_COLORS, COLOR_PALETTE
 
 # src/plot_templates.py
 # (thêm vào cuối file)
+
+def plot_dual_axis(
+    # Dữ liệu cho trục Y1 (trái)
+    x_data,
+    y1_data,
+    y1_label: str,
+    y1_color: str,
+    # Dữ liệu cho trục Y2 (phải)
+    y2_data,
+    y2_label: str,
+    y2_color: str,
+    # Các thông tin chung
+    x_label: str,
+    title: str,
+    output_path: str,
+    figsize: tuple = (7, 5),
+    y1_style: dict = None,
+    y2_style: dict = None,
+    ax=None
+):
+    """
+    Tạo và lưu biểu đồ với hai trục Y.
+    Lý tưởng để so sánh hai biến có thang đo khác nhau trên cùng một trục X.
+
+    Args:
+        x_data (array-like): Dữ liệu cho trục X.
+        y1_data (array-like): Dữ liệu cho trục Y bên trái.
+        y1_label (str): Nhãn cho trục Y bên trái.
+        y1_color (str): Màu cho trục và đường dữ liệu Y1.
+        y2_data (array-like): Dữ liệu cho trục Y bên phải.
+        y2_label (str): Nhãn cho trục Y bên phải.
+        y2_color (str): Màu cho trục và đường dữ liệu Y2.
+        x_label (str): Nhãn cho trục X.
+        title (str): Tiêu đề biểu đồ.
+        output_path (str): Đường dẫn lưu file.
+        figsize (tuple, optional): Kích thước figure.
+        y1_style (dict, optional): Dict chứa các kwargs cho plot Y1 (vd: linestyle, marker).
+        y2_style (dict, optional): Dict chứa các kwargs cho plot Y2.
+        ax (matplotlib.axes.Axes, optional): Subplot axis để vẽ lên.
+    """
+    fig, ax1, save_and_close = _setup_ax_and_save(ax, figsize, output_path)
+
+    # Đảm bảo các dict style tồn tại
+    if y1_style is None: y1_style = {}
+    if y2_style is None: y2_style = {}
+
+    # --- Vẽ trục Y1 (bên trái) ---
+    # Đặt các style mặc định nếu không được cung cấp
+    y1_style.setdefault('linestyle', '-')
+    y1_style.setdefault('marker', 'o')
+    
+    line1, = ax1.plot(x_data, y1_data, color=y1_color, label=y1_label, **y1_style)
+    
+    ax1.set_xlabel(x_label)
+    ax1.set_ylabel(y1_label, color=y1_color)
+    ax1.tick_params(axis='y', labelcolor=y1_color)
+    
+    # --- Tạo và vẽ trục Y2 (bên phải) ---
+    ax2 = ax1.twinx()  # Tạo một trục Y mới chia sẻ cùng trục X
+    
+    # Đặt các style mặc định
+    y2_style.setdefault('linestyle', '--')
+    y2_style.setdefault('marker', 's')
+    
+    line2, = ax2.plot(x_data, y2_data, color=y2_color, label=y2_label, **y2_style)
+
+    ax2.set_ylabel(y2_label, color=y2_color)
+    ax2.tick_params(axis='y', labelcolor=y2_color)
+
+    # --- Tinh chỉnh chung ---
+    ax1.set_title(title)
+    
+    # Gộp legend từ cả hai trục vào một chỗ
+    lines = [line1, line2]
+    ax1.legend(lines, [l.get_label() for l in lines], loc='upper left')
+
+    # Bật lưới cho trục chính (Y1)
+    ax1.grid(axis='y', which='major', linestyle=':', linewidth=0.7)
+    # Tắt lưới của trục phụ để tránh rối
+    ax2.grid(False)
+
+    if save_and_close:
+        plt.savefig(output_path)
+        print(f"Dual-axis plot saved to: {output_path}")
+        plt.close(fig)
+
+    return ax1, ax2
+
+# src/plot_templates.py
+# (thêm vào cuối file)
 from sklearn.manifold import TSNE
 
 def plot_tsne(
