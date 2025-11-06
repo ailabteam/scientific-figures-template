@@ -291,3 +291,72 @@ def plot_distribution(
     plt.savefig(output_path)
     print(f"Distribution plot saved to: {output_path}")
     plt.close(fig)
+
+# src/plot_templates.py
+# (thêm vào cuối file)
+
+def plot_distribution_comparison(
+    data: pd.DataFrame,
+    x_col: str,
+    y_col: str,
+    y_label: str,
+    x_label: str,
+    title: str,
+    output_path: str,
+    plot_type: str = 'violin',
+    figsize: tuple = (8, 5),
+    palette: dict = None
+):
+    """
+    Tạo và lưu biểu đồ so sánh phân bố (Violin hoặc Box Plot).
+    Lý tưởng để so sánh phân bố của một biến số qua nhiều nhóm.
+
+    Args:
+        data (pd.DataFrame): DataFrame ở dạng "long-form" chứa dữ liệu.
+        x_col (str): Tên cột chứa các nhóm/hạng mục.
+        y_col (str): Tên cột chứa giá trị số liên tục.
+        y_label (str): Nhãn cho trục Y.
+        x_label (str): Nhãn cho trục X.
+        title (str): Tiêu đề biểu đồ.
+        output_path (str): Đường dẫn lưu file PDF.
+        plot_type (str, optional): Loại biểu đồ, 'violin' hoặc 'box'. 
+                                   Mặc định là 'violin'.
+        figsize (tuple, optional): Kích thước figure. Mặc định là (8, 5).
+        palette (dict, optional): Dictionary map tên hạng mục với màu sắc.
+                                  Ví dụ: {'Baseline': 'gray', 'Our Method': 'red'}.
+                                  Mặc định là None.
+    """
+    fig, ax = plt.subplots(figsize=figsize, layout='constrained')
+    
+    plot_func = None
+    if plot_type == 'violin':
+        plot_func = sns.violinplot
+    elif plot_type == 'box':
+        plot_func = sns.boxplot
+    else:
+        raise ValueError(f"plot_type phải là 'violin' hoặc 'box', nhận được '{plot_type}'")
+
+    # Vẽ biểu đồ chính
+    plot_func(
+        x=x_col,
+        y=y_col,
+        data=data,
+        palette=palette,
+        ax=ax
+    )
+    
+    ax.set_ylabel(y_label)
+    ax.set_xlabel(x_label)
+    ax.set_title(title)
+    
+    # Tinh chỉnh cho đẹp hơn
+    # Xoay nhãn trục X nếu có nhiều nhóm và tên dài
+    if len(data[x_col].unique()) > 4:
+        plt.setp(ax.get_xticklabels(), rotation=30, ha="right", rotation_mode="anchor")
+
+    ax.grid(axis='x', which='both', visible=False)
+    ax.grid(axis='y', which='major', linestyle=':', linewidth=0.7)
+
+    plt.savefig(output_path)
+    print(f"{plot_type.capitalize()} plot saved to: {output_path}")
+    plt.close(fig)
