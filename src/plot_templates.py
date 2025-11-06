@@ -142,3 +142,76 @@ def plot_grouped_bar_chart(
     plt.savefig(output_path)
     print(f"Grouped bar chart saved to: {output_path}")
     plt.close(fig)
+
+# src/plot_templates.py
+# (thêm vào cuối file)
+import seaborn as sns
+
+# ... (các hàm khác đã có ở trên) ...
+
+def plot_heatmap(
+    matrix_data,
+    x_tick_labels,
+    y_tick_labels,
+    y_label: str,
+    x_label: str,
+    title: str,
+    output_path: str,
+    figsize: tuple = (6, 5),
+    cmap: str = 'Blues',
+    show_values: bool = True,
+    value_format: str = 'd',
+    cbar_label: str = 'Count'
+):
+    """
+    Tạo và lưu một biểu đồ heatmap, tối ưu cho confusion matrix hoặc correlation matrix.
+
+    Args:
+        matrix_data (array-like): Dữ liệu ma trận 2D (vd: numpy array, DataFrame).
+        x_tick_labels (list): Nhãn cho các cột (trục X).
+        y_tick_labels (list): Nhãn cho các hàng (trục Y).
+        y_label (str): Nhãn cho trục Y.
+        x_label (str): Nhãn cho trục X.
+        title (str): Tiêu đề biểu đồ.
+        output_path (str): Đường dẫn lưu file PDF.
+        figsize (tuple, optional): Kích thước figure. Mặc định là (6, 5).
+        cmap (str, optional): Tên colormap. 'Blues' tốt cho confusion matrix,
+                              'viridis' hoặc 'coolwarm' tốt cho correlation.
+                              Mặc định là 'Blues'.
+        show_values (bool, optional): Hiển thị giá trị số trong ô. Mặc định là True.
+        value_format (str, optional): Định dạng cho giá trị số. 'd' cho integer,
+                                      '.2f' cho float. Mặc định là 'd'.
+        cbar_label (str, optional): Nhãn cho thanh màu (colorbar). Mặc định là 'Count'.
+    """
+    fig, ax = plt.subplots(figsize=figsize, layout='constrained')
+    
+    # Sử dụng seaborn để vẽ heatmap
+    sns.heatmap(
+        matrix_data,
+        annot=show_values,      # Hiển thị số trong ô
+        fmt=value_format,       # Định dạng của số
+        cmap=cmap,              # Bảng màu
+        linewidths=.5,          # Vẽ đường kẻ mảnh giữa các ô
+        ax=ax,
+        xticklabels=x_tick_labels,
+        yticklabels=y_tick_labels,
+        annot_kws={"size": 9},  # Tùy chỉnh kích thước font của số
+        cbar_kws={'label': cbar_label} # Thêm nhãn cho color bar
+    )
+    
+    ax.set_ylabel(y_label)
+    ax.set_xlabel(x_label)
+    ax.set_title(title)
+
+    # Tối ưu hóa hiển thị của các tick labels
+    # Xoay nhãn trục X một góc vừa phải để tránh chồng chéo nếu chúng dài
+    plt.setp(ax.get_xticklabels(), rotation=30, ha="right", rotation_mode="anchor")
+    # Đảm bảo nhãn trục Y luôn nằm ngang
+    plt.setp(ax.get_yticklabels(), rotation=0)
+
+    # Tắt các vạch ticks nhỏ không cần thiết cho heatmap
+    ax.tick_params(left=False, bottom=False) 
+
+    plt.savefig(output_path)
+    print(f"Heatmap saved to: {output_path}")
+    plt.close(fig)
