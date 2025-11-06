@@ -84,7 +84,7 @@ def plot_grouped_bar_chart(
     output_path: str,
     figsize: tuple = (7, 5),
     # <<<<<<< THÊM THAM SỐ MỚI
-    ylim: tuple = None, 
+    ylim: tuple = None,
     **kwargs
 ):
     """
@@ -92,7 +92,7 @@ def plot_grouped_bar_chart(
     ... (docstring cập nhật) ...
     Args:
         ...
-        ylim (tuple, optional): Giới hạn cho trục Y, ví dụ (0, 100). 
+        ylim (tuple, optional): Giới hạn cho trục Y, ví dụ (0, 100).
                                 Nếu là None, sẽ tự động tính toán. Mặc định là None.
         ...
     """
@@ -105,10 +105,10 @@ def plot_grouped_bar_chart(
     n_values = len(value_cols)
 
     x = np.arange(n_categories)
-    
+
     total_width = 0.8
     width = total_width / n_values
-    
+
     fig, ax = plt.subplots(figsize=figsize, layout='constrained')
 
     colors = kwargs.get('colors', [COLOR_PALETTE[c] for c in ['blue', 'green', 'orange', 'purple']])
@@ -116,10 +116,10 @@ def plot_grouped_bar_chart(
     for i, value_col in enumerate(value_cols):
         offset = width * (i - (n_values - 1) / 2)
         measurements = data[value_col]
-        
-        rects = ax.bar(x + offset, measurements, width, 
+
+        rects = ax.bar(x + offset, measurements, width,
                        label=value_labels[i], color=colors[i % len(colors)])
-        
+
         ax.bar_label(rects, padding=3, fmt='%.2f', fontsize=8)
 
     ax.set_ylabel(y_label)
@@ -135,7 +135,7 @@ def plot_grouped_bar_chart(
         y_max = data[value_cols].max().max()
         ax.set_ylim(0, y_max * 1.15)
     # <<<<<<< KẾT THÚC THAY ĐỔI
-    
+
     ax.grid(axis='x', which='both', visible=False)
     ax.grid(axis='y', which='major', linestyle=':', linewidth=0.7)
 
@@ -184,7 +184,7 @@ def plot_heatmap(
         cbar_label (str, optional): Nhãn cho thanh màu (colorbar). Mặc định là 'Count'.
     """
     fig, ax = plt.subplots(figsize=figsize, layout='constrained')
-    
+
     # Sử dụng seaborn để vẽ heatmap
     sns.heatmap(
         matrix_data,
@@ -198,7 +198,7 @@ def plot_heatmap(
         annot_kws={"size": 9},  # Tùy chỉnh kích thước font của số
         cbar_kws={'label': cbar_label} # Thêm nhãn cho color bar
     )
-    
+
     ax.set_ylabel(y_label)
     ax.set_xlabel(x_label)
     ax.set_title(title)
@@ -210,8 +210,84 @@ def plot_heatmap(
     plt.setp(ax.get_yticklabels(), rotation=0)
 
     # Tắt các vạch ticks nhỏ không cần thiết cho heatmap
-    ax.tick_params(left=False, bottom=False) 
+    ax.tick_params(left=False, bottom=False)
 
     plt.savefig(output_path)
     print(f"Heatmap saved to: {output_path}")
+    plt.close(fig)
+
+# src/plot_templates.py
+# ... (các hàm khác đã có ở trên) ...
+
+
+# src/plot_templates.py
+# (thay thế hàm plot_distribution cũ)
+
+def plot_distribution(
+    data: pd.Series,
+    x_label: str,
+    title: str,
+    output_path: str,
+    figsize: tuple = (6, 4),
+    bins: int = 30,
+    show_kde: bool = True,
+    show_hist: bool = True,
+    color: str = None
+):
+    """
+    Tạo và lưu biểu đồ phân bố (histogram và/hoặc density plot - KDE).
+    Lý tưởng để xem xét sự phân bố của một biến số liên tục.
+
+    Args:
+        data (pd.Series): Một chuỗi dữ liệu (một cột của DataFrame).
+        x_label (str): Nhãn cho trục X.
+        title (str): Tiêu đề biểu đồ.
+        output_path (str): Đường dẫn lưu file PDF.
+        figsize (tuple, optional): Kích thước figure. Mặc định là (6, 4).
+        bins (int, optional): Số lượng "thùng" cho histogram. Mặc định là 30.
+        show_kde (bool, optional): Có vẽ đường mật độ (KDE) hay không. Mặc định là True.
+        show_hist (bool, optional): Có vẽ histogram hay không. Mặc định là True.
+        color (str, optional): Màu sắc cho biểu đồ. Nếu None, sẽ dùng màu mặc định.
+    """
+    if not show_hist and not show_kde:
+        print("Warning: Both show_hist and show_kde are False. No plot will be generated.")
+        return
+
+    fig, ax = plt.subplots(figsize=figsize, layout='constrained')
+    
+    plot_color = color if color else CONTEXT_COLORS['blue']
+    
+    # Logic vẽ đã được sửa lại cho chính xác
+    if show_hist:
+        # hist=True là mặc định, kde được điều khiển bởi tham số kde
+        sns.histplot(
+            data,
+            bins=bins,
+            kde=show_kde,
+            color=plot_color,
+            ax=ax
+        )
+    elif show_kde: # Chỉ show_kde=True, show_hist=False
+        sns.kdeplot(
+            data,
+            color=plot_color,
+            fill=True,
+            alpha=0.5,
+            ax=ax
+        )
+    
+    # Đặt nhãn trục y dựa trên những gì được vẽ
+    if show_hist:
+        ax.set_ylabel('Frequency')
+    else: # Chỉ có KDE
+        ax.set_ylabel('Density')
+        
+    ax.set_xlabel(x_label)
+    ax.set_title(title)
+    
+    ax.grid(axis='x', which='both', visible=False)
+    ax.grid(axis='y', which='major', linestyle=':', linewidth=0.7)
+
+    plt.savefig(output_path)
+    print(f"Distribution plot saved to: {output_path}")
     plt.close(fig)
