@@ -1,0 +1,4 @@
+Algorithm,Propagation Time (ms),Queuing Time (ms),Processing Time (ms)
+Baseline FIFO,20.5,35.2,10.1
+Priority Queuing,20.5,15.8,12.5
+Our AI Scheduler,20.5,5.3,8.2

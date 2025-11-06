@@ -9,6 +9,83 @@ from publication_style import CONTEXT_COLORS, COLOR_PALETTE
 # src/plot_templates.py
 # (thêm vào cuối file)
 
+def plot_stacked_bar_chart(
+    data: pd.DataFrame,
+    category_col: str,
+    component_cols: list,
+    y_label: str,
+    title: str,
+
+    output_path: str,
+    is_100_percent: bool = False,
+    figsize: tuple = (8, 6),
+    palette: dict = None,
+    ax=None
+):
+    """
+    Tạo và lưu biểu đồ cột xếp chồng (stacked bar chart).
+
+    Args:
+        data (pd.DataFrame): DataFrame chứa dữ liệu.
+        category_col (str): Tên cột chứa các hạng mục chính trên trục X.
+        component_cols (list): Danh sách tên các cột chứa giá trị của các thành phần.
+        y_label (str): Nhãn cho trục Y.
+        title (str): Tiêu đề biểu đồ.
+        output_path (str): Đường dẫn lưu file.
+        is_100_percent (bool, optional): Nếu True, vẽ biểu đồ 100% stacked. 
+                                         Mặc định là False.
+        figsize (tuple, optional): Kích thước figure.
+        palette (dict, optional): Dictionary map tên thành phần với màu sắc.
+        ax (matplotlib.axes.Axes, optional): Subplot axis để vẽ lên.
+    """
+    fig, ax, save_and_close = _setup_ax_and_save(ax, figsize, output_path)
+
+    # Chuẩn bị dữ liệu
+    df_plot = data.set_index(category_col)[component_cols]
+
+    if is_100_percent:
+        # Chuẩn hóa mỗi hàng để có tổng là 100
+        df_plot = df_plot.div(df_plot.sum(axis=1), axis=0) * 100
+        y_label = f"{y_label} (%)" # Tự động cập nhật nhãn Y
+
+    # Lấy bảng màu
+    if palette is None:
+        colors = [COLOR_PALETTE[c] for c in ['blue', 'green', 'orange', 'red', 'purple']]
+        palette = {col: colors[i % len(colors)] for i, col in enumerate(component_cols)}
+    
+    # Vẽ biểu đồ bằng pandas' plotting, nó xử lý việc xếp chồng rất tốt
+    df_plot.plot(
+        kind='bar',
+        stacked=True,
+        color=[palette.get(col) for col in component_cols],
+        ax=ax,
+        width=0.8 # Làm cho các cột rộng hơn một chút
+    )
+    
+    # --- Tinh chỉnh ---
+    ax.set_ylabel(y_label)
+    ax.set_xlabel(category_col) # Tự động lấy tên cột làm nhãn X
+    ax.set_title(title)
+    
+    # Xoay nhãn trục X để dễ đọc
+    plt.setp(ax.get_xticklabels(), rotation=0, ha="center")
+    
+    # Di chuyển legend ra ngoài biểu đồ để không che mất dữ liệu
+    ax.legend(title='Components', bbox_to_anchor=(1.02, 1), loc='upper left')
+
+    ax.grid(axis='x', which='both', visible=False)
+    ax.grid(axis='y', which='major', linestyle=':', linewidth=0.7)
+
+    if save_and_close:
+        plt.savefig(output_path)
+        print(f"Stacked bar chart saved to: {output_path}")
+        plt.close(fig)
+
+    return ax
+
+# src/plot_templates.py
+# (thêm vào cuối file)
+
 def plot_dual_axis(
     # Dữ liệu cho trục Y1 (trái)
     x_data,
