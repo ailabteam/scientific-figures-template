@@ -30,11 +30,8 @@ plot_grouped_bar_chart(
     y_label='Performance Score (%)',
     title='AI Model Performance for Satellite Link State Prediction',
     output_path=output_path,
-    # Tùy chỉnh màu sắc để làm nổi bật phương pháp của chúng ta
-    # (Giả sử thứ tự trong CSV là Baseline, SOTA, Our Method)
-    colors=[CONTEXT_COLORS['gray'], CONTEXT_COLORS['blue'], CONTEXT_COLORS['red']]
+    # <<<<<<< SỬ DỤNG THAM SỐ MỚI
+    # Bắt đầu trục Y từ 85 để làm nổi bật sự khác biệt
+    ylim=(85, 97)
 )
 
-# LƯU Ý: Nếu dữ liệu có thứ tự khác, bạn cần sắp xếp lại DataFrame
-# hoặc điều chỉnh lại thứ tự màu cho phù hợp.
-# Ví dụ: df = df.set_index('model_name').loc[['Baseline (SVM)', 'SOTA (GNN)', 'Our Method (Q-GNN)']].reset_index()
