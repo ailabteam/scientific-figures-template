@@ -3,41 +3,67 @@
 import sys
 import os
 import pandas as pd
+import matplotlib.pyplot as plt
 
-# Thêm thư mục src vào Python Path
+# --- Thêm thư mục src vào Python Path ---
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(os.path.join(project_root, 'src'))
 
 # Import các hàm cần thiết
-from publication_style import set_publication_style
+from publication_style import set_publication_style, CONTEXT_COLORS
 from plot_templates import plot_line_comparison, plot_grouped_bar_chart
 
 # --- Bước 1: Thiết lập Style chung ---
 set_publication_style(font_family='sans-serif')
 
-# --- Ví dụ 1: Line Plot với dải lỗi (Training Curve) ---
-print("--- Generating Line Plot with Error Bands ---")
+# --- Ví dụ 1: Line Plot với dải lỗi (Training & Validation Curves) ---
+print("--- Generating Line Plot with Error Bands for Training/Validation ---")
 df_train = pd.read_csv(os.path.join(project_root, 'data', 'sample_training_curves.csv'))
 
-output_path_line = os.path.join(project_root, 'figures', '12_training_accuracy_with_error.pdf')
+output_path_line = os.path.join(project_root, 'figures', '12_training_curves_with_error.pdf')
+
 plot_line_comparison(
     data=df_train,
     x_col='epoch',
-    y_cols=['accuracy_mean'],
-    y_labels=['Model Accuracy'],
+    y_cols=['train_acc_mean', 'val_acc_mean'],
+    y_labels=['Training Accuracy', 'Validation Accuracy'],
     x_label='Epoch',
     y_label='Accuracy',
-    title='Model Training Accuracy (Mean ± SD over 5 runs)',
+    title='Model Training and Validation Accuracy',
     output_path=output_path_line,
-    y_error_cols={'accuracy_mean': 'accuracy_std'}, # Map cột mean với cột std
-    ylim=(0.5, 1.0)
+    y_error_cols={
+        'train_acc_mean': 'train_acc_std',
+        'val_acc_mean': 'val_acc_std'
+    },
+    ylim=(0.5, 1.01),
+    colors=[CONTEXT_COLORS['blue'], CONTEXT_COLORS['green']],
+    linestyles=['-', '--']
+)
+
+
+# --- Ví dụ 1b: Vẽ biểu đồ Loss ---
+print("\n--- Generating Line Plot for Training/Validation Loss ---")
+output_path_loss = os.path.join(project_root, 'figures', '12b_training_loss_curves.pdf')
+plot_line_comparison(
+    data=df_train,
+    x_col='epoch',
+    y_cols=['train_loss_mean', 'val_loss_mean'],
+    y_labels=['Training Loss', 'Validation Loss'],
+    x_label='Epoch',
+    y_label='Loss',
+    title='Model Training and Validation Loss',
+    output_path=output_path_loss,
+    y_error_cols={
+        'train_loss_mean': 'train_loss_std',
+        'val_loss_mean': 'val_loss_std'
+    },
+    colors=[CONTEXT_COLORS['blue'], CONTEXT_COLORS['green']],
+    linestyles=['-', '--']
 )
 
 # --- Ví dụ 2: Bar Chart với thanh lỗi (Final Performance) ---
 print("\n--- Generating Bar Chart with Error Bars ---")
-# Sử dụng lại dữ liệu từ ví dụ 03, thêm cột lỗi
 df_perf = pd.read_csv(os.path.join(project_root, 'data', 'sample_model_performance.csv'))
-# Thêm dữ liệu lỗi giả (SEM)
 df_perf['accuracy_sem'] = [1.2, 0.9, 0.5]
 df_perf['f1_score_sem'] = [1.1, 1.0, 0.6]
 
@@ -47,7 +73,7 @@ plot_grouped_bar_chart(
     category_col='model_name',
     value_cols=['accuracy', 'f1_score'],
     value_labels=['Accuracy (%)', 'F1-Score (%)'],
-    error_cols=['accuracy_sem', 'f1_score_sem'], # Truyền vào cột lỗi
+    error_cols=['accuracy_sem', 'f1_score_sem'],
     y_label='Performance Score (%)',
     title='Final Model Performance (Mean ± SEM)',
     output_path=output_path_bar,
