@@ -5,6 +5,9 @@ import pandas as pd
 import numpy as np
 from publication_style import CONTEXT_COLORS, COLOR_PALETTE
 
+# src/plot_templates.py
+# (sửa lại hàm plot_line_comparison)
+
 def plot_line_comparison(
     data: pd.DataFrame,
     x_col: str,
@@ -14,66 +17,77 @@ def plot_line_comparison(
     y_label: str,
     title: str,
     output_path: str,
+    # <<<<<<< THÊM THAM SỐ MỚI
+    y_error_cols: dict = None,
     figsize: tuple = (6, 4),
     **kwargs
 ):
     """
-    Tạo và lưu một biểu đồ đường (line plot) để so sánh hiệu năng.
-    ... (docstring) ...
+    Tạo và lưu một biểu đồ đường để so sánh hiệu năng, có thể kèm dải lỗi.
+
+    Args:
+        ... (các tham số cũ) ...
+        y_error_cols (dict, optional): Dict để map cột y với cột chứa giá trị lỗi.
+                                       Giá trị lỗi này là bán kính của dải lỗi (vd: SD).
+                                       Ví dụ: {'our_method': 'our_method_std'}.
+                                       Mặc định là None.
+        ...
     """
     if len(y_cols) != len(y_labels):
         raise ValueError("Số lượng cột Y và nhãn Y phải bằng nhau.")
 
-    fig, ax = plt.subplots(figsize=figsize)
+    fig, ax = plt.subplots(figsize=figsize, layout='constrained')
 
     linestyles = kwargs.get('linestyles', ['-', '--', ':', '-.'])
     markers = kwargs.get('markers', ['o', 's', '^', 'D'])
-    colors = kwargs.get('colors', [
-        CONTEXT_COLORS.get('proposed'),
-        CONTEXT_COLORS.get('sota'),
-        CONTEXT_COLORS.get('baseline'),
-        CONTEXT_COLORS.get('method_A'),
-        CONTEXT_COLORS.get('method_B')
-    ])
+    colors = kwargs.get('colors', [CONTEXT_COLORS.get(c) for c in ['proposed', 'sota', 'baseline', 'method_A']])
 
     for i, y_col in enumerate(y_cols):
         style_idx = i % len(linestyles)
         marker_idx = i % len(markers)
-        color_idx = i % len(colors)
-
+        color = colors[i % len(colors)]
+        
         linewidth = 2.0 if i == 0 else 1.5
-
+        
+        # Lấy dữ liệu
+        x_data = data[x_col]
+        y_data = data[y_col]
+        
+        # Vẽ đường trung tâm
         ax.plot(
-            data[x_col],
-            data[y_col],
-            label=y_labels[i],
-            color=colors[color_idx],
-            linestyle=linestyles[style_idx],
-            marker=markers[marker_idx],
-            markevery=10,
-            linewidth=linewidth
+            x_data, y_data, label=y_labels[i], color=color,
+            linestyle=linestyles[style_idx], marker=markers[marker_idx],
+            markevery=10, linewidth=linewidth, zorder=i+2 # zorder để đường kẻ nổi lên trên dải màu
         )
+        
+        # <<<<<<< THÊM LOGIC VẼ DẢI LỖI
+        if y_error_cols and y_col in y_error_cols:
+            error_col = y_error_cols[y_col]
+            y_error = data[error_col]
+            ax.fill_between(
+                x_data, y_data - y_error, y_data + y_error,
+                color=color, alpha=0.2, zorder=i+1 # alpha để dải màu trong suốt
+            )
 
     ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
     ax.set_title(title)
     ax.legend()
-
-    if 'xlim' in kwargs:
-        ax.set_xlim(kwargs['xlim'])
-    if 'ylim' in kwargs:
-        ax.set_ylim(kwargs['ylim'])
-    if 'yscale' in kwargs:
-        ax.set_yscale(kwargs['yscale'])
+    
+    if 'xlim' in kwargs: ax.set_xlim(kwargs['xlim'])
+    if 'ylim' in kwargs: ax.set_ylim(kwargs['ylim'])
+    if 'yscale' in kwargs: ax.set_yscale(kwargs['yscale'])
 
     plt.savefig(output_path)
-    print(f"Line plot saved to: {output_path}")
+    print(f"Line plot with error bands saved to: {output_path}")
     plt.close(fig)
 
 
 # src/plot_templates.py
 # ... (các import và hàm plot_line_comparison) ...
 
+# src/plot_templates.py
+# (sửa lại hàm plot_grouped_bar_chart)
 def plot_grouped_bar_chart(
     data: pd.DataFrame,
     category_col: str,
@@ -82,67 +96,80 @@ def plot_grouped_bar_chart(
     y_label: str,
     title: str,
     output_path: str,
-    figsize: tuple = (7, 5),
     # <<<<<<< THÊM THAM SỐ MỚI
-    ylim: tuple = None,
+    error_cols: list = None,
+    figsize: tuple = (7, 5),
+    ylim: tuple = None, 
     **kwargs
 ):
     """
-    Tạo và lưu một biểu đồ cột nhóm (grouped bar chart).
-    ... (docstring cập nhật) ...
+    ... (docstring) ...
     Args:
         ...
-        ylim (tuple, optional): Giới hạn cho trục Y, ví dụ (0, 100).
-                                Nếu là None, sẽ tự động tính toán. Mặc định là None.
+        error_cols (list, optional): Danh sách tên các cột chứa giá trị lỗi (vd: SD, SEM).
+                                     Thứ tự phải tương ứng với value_cols.
+                                     Nếu None, sẽ không vẽ thanh lỗi. Mặc định là None.
         ...
     """
-    # ... (code kiểm tra len và lấy categories vẫn như cũ) ...
+    # ... (code kiểm tra và chuẩn bị) ...
     if len(value_cols) != len(value_labels):
-        raise ValueError("Số lượng cột giá trị và nhãn giá trị phải bằng nhau.")
+        raise ValueError(...)
+    if error_cols and len(value_cols) != len(error_cols):
+        raise ValueError("Số lượng cột giá trị và cột lỗi phải bằng nhau.")
 
+    # ... (code tính toán vị trí) ...
     categories = data[category_col]
     n_categories = len(categories)
     n_values = len(value_cols)
-
     x = np.arange(n_categories)
-
     total_width = 0.8
     width = total_width / n_values
-
+    
     fig, ax = plt.subplots(figsize=figsize, layout='constrained')
-
-    colors = kwargs.get('colors', [COLOR_PALETTE[c] for c in ['blue', 'green', 'orange', 'purple']])
+    colors = kwargs.get('colors', [COLOR_PALETTE.get(c) for c in ['blue', 'green', 'orange']])
 
     for i, value_col in enumerate(value_cols):
         offset = width * (i - (n_values - 1) / 2)
         measurements = data[value_col]
-
-        rects = ax.bar(x + offset, measurements, width,
-                       label=value_labels[i], color=colors[i % len(colors)])
-
+        
+        # <<<<<<< THÊM LOGIC LẤY DỮ LIỆU LỖI
+        y_error = data[error_cols[i]] if error_cols else None
+        
+        rects = ax.bar(
+            x + offset, measurements, width, 
+            label=value_labels[i], color=colors[i % len(colors)],
+            yerr=y_error, # Tham số để vẽ error bar
+            capsize=3     # Thêm gạch ngang ở đầu/cuối error bar
+        )
+        
         ax.bar_label(rects, padding=3, fmt='%.2f', fontsize=8)
 
+    # ... (code còn lại của hàm giữ nguyên) ...
     ax.set_ylabel(y_label)
     ax.set_title(title)
     ax.set_xticks(x, categories)
     ax.legend(title='Metrics')
 
-    # <<<<<<< THAY ĐỔI LOGIC XỬ LÝ YLIM
     if ylim:
         ax.set_ylim(ylim)
     else:
-        # Logic tự động: bắt đầu từ 0 và thêm 15% không gian ở trên
-        y_max = data[value_cols].max().max()
+        # Cập nhật logic tự động để tính cả error bar
+        y_max_val = data[value_cols].max().max()
+        if error_cols:
+            y_max_err = (data[value_cols] + data[error_cols]).max().max()
+            y_max = max(y_max_val, y_max_err)
+        else:
+            y_max = y_max_val
         ax.set_ylim(0, y_max * 1.15)
-    # <<<<<<< KẾT THÚC THAY ĐỔI
-
+        
     ax.grid(axis='x', which='both', visible=False)
     ax.grid(axis='y', which='major', linestyle=':', linewidth=0.7)
 
     plt.savefig(output_path)
-    print(f"Grouped bar chart saved to: {output_path}")
+    print(f"Grouped bar chart with error bars saved to: {output_path}")
     plt.close(fig)
 
+    
 # src/plot_templates.py
 # (thêm vào cuối file)
 import seaborn as sns
@@ -254,9 +281,9 @@ def plot_distribution(
         return
 
     fig, ax = plt.subplots(figsize=figsize, layout='constrained')
-    
+
     plot_color = color if color else CONTEXT_COLORS['blue']
-    
+
     # Logic vẽ đã được sửa lại cho chính xác
     if show_hist:
         # hist=True là mặc định, kde được điều khiển bởi tham số kde
@@ -275,16 +302,16 @@ def plot_distribution(
             alpha=0.5,
             ax=ax
         )
-    
+
     # Đặt nhãn trục y dựa trên những gì được vẽ
     if show_hist:
         ax.set_ylabel('Frequency')
     else: # Chỉ có KDE
         ax.set_ylabel('Density')
-        
+
     ax.set_xlabel(x_label)
     ax.set_title(title)
-    
+
     ax.grid(axis='x', which='both', visible=False)
     ax.grid(axis='y', which='major', linestyle=':', linewidth=0.7)
 
@@ -319,7 +346,7 @@ def plot_distribution_comparison(
         x_label (str): Nhãn cho trục X.
         title (str): Tiêu đề biểu đồ.
         output_path (str): Đường dẫn lưu file PDF.
-        plot_type (str, optional): Loại biểu đồ, 'violin' hoặc 'box'. 
+        plot_type (str, optional): Loại biểu đồ, 'violin' hoặc 'box'.
                                    Mặc định là 'violin'.
         figsize (tuple, optional): Kích thước figure. Mặc định là (8, 5).
         palette (dict, optional): Dictionary map tên hạng mục với màu sắc.
@@ -327,7 +354,7 @@ def plot_distribution_comparison(
                                   Mặc định là None.
     """
     fig, ax = plt.subplots(figsize=figsize, layout='constrained')
-    
+
     plot_func = None
     if plot_type == 'violin':
         plot_func = sns.violinplot
@@ -344,11 +371,11 @@ def plot_distribution_comparison(
         palette=palette,
         ax=ax
     )
-    
+
     ax.set_ylabel(y_label)
     ax.set_xlabel(x_label)
     ax.set_title(title)
-    
+
     # Tinh chỉnh cho đẹp hơn
     # Xoay nhãn trục X nếu có nhiều nhóm và tên dài
     if len(data[x_col].unique()) > 4:
@@ -360,3 +387,4 @@ def plot_distribution_comparison(
     plt.savefig(output_path)
     print(f"{plot_type.capitalize()} plot saved to: {output_path}")
     plt.close(fig)
+
