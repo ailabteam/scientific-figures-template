@@ -179,3 +179,89 @@ def plot_distribution_comparison(data: pd.DataFrame, x_col: str, y_col: str, y_l
         print(f"{plot_type.capitalize()} plot saved to: {output_path}")
         plt.close(fig)
     return ax
+
+# src/plot_templates.py
+# (thêm vào cuối file)
+from scipy.interpolate import griddata
+
+def plot_contour(
+    x_data,
+    y_data,
+    z_data,
+    x_label: str,
+    y_label: str,
+    title: str,
+    output_path: str,
+    cbar_label: str,
+    figsize: tuple = (7, 5),
+    cmap: str = 'viridis',
+    is_gridded: bool = False,
+    grid_resolution: int = 100,
+    levels: int = 10,
+    show_points: bool = True
+):
+    """
+    Tạo và lưu biểu đồ đường viền (contour plot), có thể nội suy từ dữ liệu rời rạc.
+
+    Args:
+        x_data (array-like): Dữ liệu tọa độ X.
+        y_data (array-like): Dữ liệu tọa độ Y.
+        z_data (array-like): Dữ liệu giá trị Z.
+        x_label (str): Nhãn trục X.
+        y_label (str): Nhãn trục Y.
+        title (str): Tiêu đề biểu đồ.
+        output_path (str): Đường dẫn lưu file PDF.
+        cbar_label (str): Nhãn cho thanh màu.
+        figsize (tuple, optional): Kích thước figure. Mặc định là (7, 5).
+        cmap (str, optional): Tên colormap. Mặc định là 'viridis'.
+        is_gridded (bool, optional): True nếu dữ liệu đã ở dạng lưới. 
+                                     Nếu False, hàm sẽ thực hiện nội suy. Mặc định là False.
+        grid_resolution (int, optional): Độ phân giải của lưới nội suy. Mặc định là 100.
+        levels (int, optional): Số lượng đường viền. Mặc định là 10.
+        show_points (bool, optional): Có hiển thị các điểm dữ liệu gốc hay không. 
+                                      Hữu ích khi is_gridded=False. Mặc định là True.
+    """
+    fig, ax = plt.subplots(figsize=figsize, layout='constrained')
+    
+    xi, yi, zi = None, None, None
+    
+    if is_gridded:
+        # Dữ liệu đã là lưới, X và Y là vector, Z là ma trận
+        xi, yi = x_data, y_data
+        zi = z_data
+    else:
+        # Dữ liệu là các điểm rời rạc, cần nội suy
+        # Tạo một lưới đều
+        xi = np.linspace(min(x_data), max(x_data), grid_resolution)
+        yi = np.linspace(min(y_data), max(y_data), grid_resolution)
+        grid_x, grid_y = np.meshgrid(xi, yi)
+        
+        # Nội suy dữ liệu Z lên lưới
+        zi = griddata((x_data, y_data), z_data, (grid_x, grid_y), method='cubic')
+
+    # Vẽ contour plot dạng tô màu (filled)
+    contourf = ax.contourf(xi, yi, zi, levels=levels, cmap=cmap, alpha=0.9)
+    
+    # Vẽ các đường viền
+    contour_lines = ax.contour(xi, yi, zi, levels=levels, colors='white', linewidths=0.5)
+    
+    # Thêm nhãn số lên các đường viền
+    ax.clabel(contour_lines, inline=True, fontsize=8, fmt='%.1f')
+    
+    # Hiển thị các điểm dữ liệu gốc (nếu có)
+    if not is_gridded and show_points:
+        ax.scatter(x_data, y_data, c='red', s=10, edgecolor='black', linewidth=0.5,
+                   label='Data Points', zorder=10)
+        ax.legend(loc='upper right')
+
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    ax.set_title(title)
+    
+    # Thêm thanh màu (colorbar)
+    cbar = fig.colorbar(contourf, ax=ax)
+    cbar.set_label(cbar_label)
+    
+    plt.savefig(output_path)
+    print(f"Contour plot saved to: {output_path}")
+    plt.close(fig)
