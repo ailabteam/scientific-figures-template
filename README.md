@@ -1,0 +1,1 @@
+# scientific-figures-template
