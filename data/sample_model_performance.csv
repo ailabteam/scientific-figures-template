@@ -1,0 +1,4 @@
+model_name,accuracy,f1_score,latency_ms
+Baseline (SVM),88.5,89.2,120.1
+SOTA (GNN),91.2,90.8,250.5
+Our Method (Q-GNN),94.7,95.1,155.3

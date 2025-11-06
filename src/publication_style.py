@@ -5,11 +5,10 @@ import matplotlib.pyplot as plt
 # ==============================================================================
 # Bảng màu tùy chỉnh (Custom Color Palette)
 # Đây là nơi chúng ta định nghĩa "ngôn ngữ màu sắc" cho paper của mình.
-# ==============================================================================
 # Sử dụng bảng màu "Tableau 10" - một lựa chọn rất tốt, rõ ràng và đẹp.
 # Ref: https://help.tableau.com/current/pro/desktop/en-us/viewparts_color_palette.htm
 # Chúng ta sẽ đặt tên gợi nhớ cho từng màu.
-
+# ==============================================================================
 COLOR_PALETTE = {
     'blue':   '#1f77b4',  # Màu xanh dương chính
     'orange': '#ff7f0e',  # Màu cam nhấn mạnh
@@ -23,15 +22,30 @@ COLOR_PALETTE = {
     'cyan':   '#17becf'
 }
 
-# Định nghĩa màu sắc theo ngữ cảnh sử dụng
-# Đây là một "best practice" để đảm bảo sự nhất quán.
-CONTEXT_COLORS = {
-    'proposed': COLOR_PALETTE['red'],
-    'sota':     COLOR_PALETTE['blue'],      # State-of-the-art
-    'baseline': COLOR_PALETTE['gray'],
-    'method_A': COLOR_PALETTE['green'],
-    'method_B': COLOR_PALETTE['orange'],
-}
+
+# ==============================================================================
+# Bảng màu theo ngữ cảnh (Contextual Color Palette)
+# Kế thừa tất cả màu từ COLOR_PALETTE và thêm các alias (tên thay thế)
+# cho các trường hợp sử dụng phổ biến trong paper.
+# ==============================================================================
+CONTEXT_COLORS = COLOR_PALETTE.copy() # Bắt đầu bằng cách sao chép tất cả các màu cơ bản
+CONTEXT_COLORS.update({
+    # --- Aliases for common academic contexts ---
+    'proposed':   CONTEXT_COLORS['red'],     # Phương pháp đề xuất
+    'our_method': CONTEXT_COLORS['red'],
+    
+    'sota':       CONTEXT_COLORS['blue'],    # State-of-the-art
+    'competitor': CONTEXT_COLORS['blue'],
+
+    'baseline':   CONTEXT_COLORS['gray'],    # Phương pháp nền
+    'benchmark':  CONTEXT_COLORS['gray'],
+    
+    # --- Aliases for generic methods ---
+    'method_A':   CONTEXT_COLORS['green'],
+    'method_B':   CONTEXT_COLORS['orange'],
+    'method_C':   CONTEXT_COLORS['purple'],
+})
+
 
 # ==============================================================================
 # Hàm thiết lập style chính
