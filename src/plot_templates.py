@@ -6,6 +6,93 @@ import numpy as np
 import seaborn as sns
 from publication_style import CONTEXT_COLORS, COLOR_PALETTE
 
+# src/plot_templates.py
+# (thêm vào cuối file)
+from sklearn.manifold import TSNE
+
+def plot_tsne(
+    features,
+    labels,
+    title: str,
+    output_path: str,
+    palette: dict = None,
+    figsize: tuple = (6, 6),
+    perplexity: float = 30.0,
+    ax=None,
+    **kwargs
+):
+    """
+    Thực hiện t-SNE và vẽ kết quả lên một scatter plot.
+
+    Args:
+        features (np.array): Mảng 2D chứa các vector đặc trưng (n_samples, n_features).
+        labels (array-like): Nhãn (ground truth) của mỗi mẫu.
+        title (str): Tiêu đề cho subplot.
+        output_path (str): Đường dẫn lưu file (chỉ dùng khi ax=None).
+        palette (dict, optional): Dictionary map nhãn với màu sắc.
+        figsize (tuple, optional): Kích thước figure. Mặc định là (6, 6) (hình vuông).
+        perplexity (float, optional): Tham số perplexity cho t-SNE. Mặc định là 30.0.
+        ax (matplotlib.axes.Axes, optional): Subplot axis để vẽ lên.
+        **kwargs: Các tham số khác cho plt.scatter (vd: s - kích thước điểm).
+    """
+    fig, ax, save_and_close = _setup_ax_and_save(ax, figsize, output_path)
+
+    # --- Bước 1: Chạy thuật toán t-SNE ---
+    print(f"Running t-SNE for '{title}' with perplexity={perplexity}...")
+    tsne = TSNE(n_components=2, perplexity=perplexity, random_state=42, init='pca', learning_rate='auto')
+    features_2d = tsne.fit_transform(features)
+    
+    # Tạo DataFrame để dễ dàng vẽ với Seaborn
+    df_tsne = pd.DataFrame({
+        't-SNE-1': features_2d[:, 0],
+        't-SNE-2': features_2d[:, 1],
+        'label': labels
+    })
+
+    # --- Bước 2: Vẽ Scatter Plot ---
+    # Lấy danh sách các lớp duy nhất để đảm bảo thứ tự nhất quán
+    unique_labels = sorted(df_tsne['label'].unique())
+    
+    # Lấy bảng màu
+    if palette is None:
+        colors = [COLOR_PALETTE[c] for c in ['blue', 'green', 'orange', 'purple', 'red', 'olive']]
+        palette = {label: colors[i % len(colors)] for i, label in enumerate(unique_labels)}
+
+    sns.scatterplot(
+        data=df_tsne,
+        x='t-SNE-1',
+        y='t-SNE-2',
+        hue='label',
+        hue_order=unique_labels, # Đảm bảo thứ tự legend
+        palette=palette,
+        ax=ax,
+        s=kwargs.get('s', 20),      # Kích thước điểm
+        alpha=kwargs.get('alpha', 0.8) # Độ trong suốt
+    )
+    
+    # --- Tinh chỉnh cho đẹp ---
+    ax.set_title(title)
+    ax.set_xlabel('t-SNE Dimension 1')
+    ax.set_ylabel('t-SNE Dimension 2')
+    
+    # Tắt các số trên trục vì chúng không có ý nghĩa vật lý
+    ax.set_xticks([])
+    ax.set_yticks([])
+    
+    # Tắt lưới
+    ax.grid(False)
+    
+    # Tối ưu hóa legend
+    handles, labels = ax.get_legend_handles_labels()
+    ax.legend(handles, labels, title='Classes', loc='best')
+
+    if save_and_close:
+        plt.savefig(output_path)
+        print(f"t-SNE plot saved to: {output_path}")
+        plt.close(fig)
+
+    return ax
+
 # ==============================================================================
 # Helper function to handle figure/axis creation and saving
 # This avoids code repetition in every plotting function.
